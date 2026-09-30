@@ -5,7 +5,7 @@ services:
       context: services/app
       dockerfile: environment/Dockerfile.local
     ports:
-      - "3000:3000"
+      - "3000:8001"
 
   api:
     container_name: distributed-agent-workers-api
