@@ -1,0 +1,27 @@
+FROM public.ecr.aws/docker/library/node:24-slim AS builder
+
+COPY --from=oven/bun:1.3.14 /usr/local/bin/bun /usr/local/bin/bun
+
+WORKDIR /app
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+RUN bun run build
+
+# Standalone output bundles only the server files the app needs, so the
+# runtime image carries no node_modules or bun.
+FROM public.ecr.aws/docker/library/node:24-slim
+
+WORKDIR /app
+
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# The standalone server binds to HOSTNAME, which Docker sets to the container ID.
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+CMD ["node", "server.js"]
