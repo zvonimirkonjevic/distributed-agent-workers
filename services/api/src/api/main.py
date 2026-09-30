@@ -1,6 +1,15 @@
 from fastapi import FastAPI
 
+from core.database import init_db
+from utils.config import Config
+from utils.logger import setup_logging
+
+
 def create_app() -> FastAPI:
+    setup_logging(level=Config.log_level)
+
+    init_db(Config.database_url)
+
     app = FastAPI(
         title="Distributed Agent Workers API",
         description=(
