@@ -44,6 +44,19 @@ class Config:
         )
 
     @classproperty
+    def sqs_endpoint_url(cls) -> str | None:
+        """Get the SQS endpoint URL, or None to use the real AWS endpoint.
+
+        Locally this points at LocalStack; elsewhere boto3 resolves the
+        endpoint from the region, so no override is needed.
+        """
+        if cls.env != "local":
+            return None
+
+        localstack_host = "localstack" if cls.inside_container else "localhost"
+        return f"http://{localstack_host}:4566"
+
+    @classproperty
     def log_level(cls) -> str:
         """Get the minimum log level from environment variables."""
         return os.getenv("LOG_LEVEL", "INFO")
