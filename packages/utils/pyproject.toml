@@ -1,20 +1,13 @@
 [project]
-name = "api"
+name = "utils"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "core",
-    "fastapi>=0.142.2",
-    "utils",
-    "uvicorn>=0.54.0",
+    "loguru>=0.7.3",
 ]
 
 [build-system]
 requires = ["uv_build>=0.8.18,<0.9.0"]
 build-backend = "uv_build"
-
-[tool.uv.sources]
-core = { workspace = true }
-utils = { workspace = true }
