@@ -1,6 +1,8 @@
-"""
-Unified database client.
-Single engine/session management for all database operations.
+"""Unified database client.
+
+Holds a process-wide SQLAlchemy engine and session factory, created by
+`init_db`. Each process (API or forked worker) must call `init_db` itself so
+it owns its connections instead of inheriting them across a fork.
 """
 from contextlib import contextmanager
 from loguru import logger
@@ -16,8 +18,12 @@ _engine, _Session = None, None
 
 
 def init_db(connection_string: str):
-    """
-    Initialize database. Call once at app startup.
+    """Create the engine and session factory, then create any missing tables.
+
+    Call once per process at startup, before any other function here.
+
+    Args:
+        connection_string: SQLAlchemy URL, e.g. "postgresql+psycopg://...".
     """
 
     logger.info("Initializing database...")
@@ -35,14 +41,31 @@ def init_db(connection_string: str):
 
 
 def get_engine():
-    """Get the SQLAlchemy engine."""
+    """Get the process-wide SQLAlchemy engine.
+
+    Returns:
+        The engine created by `init_db`.
+
+    Raises:
+        RuntimeError: If `init_db` has not been called.
+    """
     if _engine is None:
         raise RuntimeError("Database engine is not initialized. Call init_db() first.")
     return _engine
 
 
 def get_session():
-    """Get a new SQLAlchemy session."""
+    """Create a new SQLAlchemy session.
+
+    The caller owns the session and must commit and close it. Prefer
+    `session_scope`, which does both.
+
+    Returns:
+        A new session bound to the process-wide engine.
+
+    Raises:
+        RuntimeError: If `init_db` has not been called.
+    """
     if _Session is None:
         raise RuntimeError("Database session is not initialized. Call init_db() first.")
     return _Session()
@@ -50,7 +73,17 @@ def get_session():
 
 @contextmanager
 def session_scope():
-    """Context manager for a SQLAlchemy session."""
+    """Provide a transactional session scope.
+
+    Commits on normal exit, rolls back and re-raises on exception, and
+    always closes the session.
+
+    Yields:
+        A new session bound to the process-wide engine.
+
+    Raises:
+        RuntimeError: If `init_db` has not been called.
+    """
     session = get_session()
     try:
         yield session

@@ -1,3 +1,4 @@
+"""Application settings read from environment variables."""
 import os
 from typing import Any, Callable
 
@@ -13,7 +14,11 @@ class classproperty[T]:
 
 
 class Config:
-    """Configuration class for managing application settings."""
+    """Application settings, accessed on the class, e.g. `Config.database_url`.
+
+    Values are re-read from the environment on every access, not cached at
+    import time.
+    """
 
     @classproperty
     def env(cls) -> str:
@@ -27,7 +32,15 @@ class Config:
 
     @classproperty
     def database_url(cls) -> str:
-        """Get the database URL from environment variables."""
+        """Get the psycopg 3 database URL built from `POSTGRES_*` variables.
+
+        With `ENV=local`, the host is derived: `postgres` (the compose service
+        name) inside a container, `localhost` otherwise. Any other environment
+        requires `POSTGRES_HOST`.
+
+        Raises:
+            KeyError: If `ENV` is not "local" and `POSTGRES_HOST` is unset.
+        """
         database_name = os.getenv("POSTGRES_DB", "")
         database_user = os.getenv("POSTGRES_USER", "")
         database_password = os.getenv("POSTGRES_PASSWORD", "")

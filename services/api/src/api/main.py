@@ -1,3 +1,4 @@
+"""API gateway entrypoint; `app` is served by uvicorn."""
 from fastapi import FastAPI
 
 from core.database import init_db
@@ -6,6 +7,11 @@ from utils.logger import setup_logging
 
 
 def create_app() -> FastAPI:
+    """Configure logging, initialize the database, and build the FastAPI app.
+
+    Returns:
+        The configured application with all routes registered.
+    """
     setup_logging(level=Config.log_level)
 
     init_db(Config.database_url)
@@ -22,9 +28,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["Health"])
     async def health_check():
-        """
-        Health check endpoint to verify that the API is running.
-        """
+        """Report that the API process is up and serving requests."""
         return {"status": "healthy"}
 
     return app
