@@ -20,7 +20,7 @@ function groupByRecency(sessions: ChatSession[], now: Date) {
   return groups.filter((group) => group.items.length > 0);
 }
 
-export default function Sidebar({ sessions }: { sessions: ChatSession[] | null }) {
+export default function Sidebar({ sessions, activeId }: { sessions: ChatSession[] | null; activeId?: string }) {
   const groups = sessions ? groupByRecency(sessions, new Date()) : [];
 
   return (
@@ -41,14 +41,14 @@ export default function Sidebar({ sessions }: { sessions: ChatSession[] | null }
               <ul>
                 {group.items.map((session) => (
                   <li key={session.id}>
-                    {/* A button until chat pages exist; becomes a Link to the session then. */}
-                    <button
-                      type="button"
+                    <Link
+                      href={`/sessions/${session.id}`}
                       title={session.title}
-                      className="w-full truncate rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60"
+                      aria-current={session.id === activeId ? "page" : undefined}
+                      className="block w-full truncate rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60 aria-[current=page]:bg-zinc-200/80 aria-[current=page]:text-zinc-950"
                     >
                       {session.title}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>

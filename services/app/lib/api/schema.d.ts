@@ -85,6 +85,35 @@ export interface paths {
         patch: operations["update_sessions__session_id__patch"];
         trace?: never;
     };
+    "/sessions/{session_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a session's messages
+         * @description Return the session's user and assistant messages, oldest first.
+         *
+         *     Responds with 404 if the session does not exist or has been deleted.
+         */
+        get: operations["list_all_sessions__session_id__messages_get"];
+        put?: never;
+        /**
+         * Send a message and wait for the reply
+         * @description Run one agent turn on the message and return the assistant's reply.
+         *
+         *     Blocks until the agent finishes. Responds with 404 if the session does not
+         *     exist or has been deleted, and 502 if the agent ends without a text reply.
+         */
+        post: operations["send_sessions__session_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -93,6 +122,32 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MessageCreate
+         * @description Body of a send-message request.
+         */
+        MessageCreate: {
+            /** Content */
+            content: string;
+        };
+        /**
+         * MessageResponse
+         * @description Public view of one chat message.
+         *
+         *     Only user and assistant text is exposed; tool calls, tool results, and
+         *     system messages stay inside the agent's checkpoint.
+         */
+        MessageResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
         };
         /**
          * SessionCreate
@@ -302,6 +357,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_all_sessions__session_id__messages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_sessions__session_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
             /** @description Validation Error */

@@ -22,3 +22,41 @@ export async function listSessions(): Promise<ChatSession[] | null> {
     return null;
   }
 }
+
+export type ChatMessage = components["schemas"]["MessageResponse"];
+
+/**
+ * Read one chat session, or null when it does not exist or was deleted.
+ *
+ * Throws when the API is unreachable or errors, so a failure is not mistaken
+ * for a missing session.
+ */
+export async function getSession(sessionId: string): Promise<ChatSession | null> {
+  const { data, response } = await api().GET("/sessions/{session_id}", {
+    params: { path: { session_id: sessionId } },
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!data) {
+    throw new Error(`failed to load session: session_id=${sessionId} status=${response.status}`);
+  }
+  return data;
+}
+
+/**
+ * Read a session's user and assistant messages, oldest first.
+ *
+ * Returns null when the API is unreachable or errors, so callers can tell a
+ * failure apart from an empty conversation.
+ */
+export async function listMessages(sessionId: string): Promise<ChatMessage[] | null> {
+  try {
+    const { data } = await api().GET("/sessions/{session_id}/messages", {
+      params: { path: { session_id: sessionId } },
+    });
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}

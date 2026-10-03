@@ -2,13 +2,17 @@
 
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 
-export default function Composer() {
+export default function Composer({ onSend, disabled }: { onSend: (message: string) => void; disabled: boolean }) {
   const [message, setMessage] = useState("");
-  const canSend = message.trim().length > 0;
+  const canSend = !disabled && message.trim().length > 0;
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // Sending creates the chat session and dispatches the agent run; not wired yet.
+    if (!canSend) {
+      return;
+    }
+    onSend(message);
+    setMessage("");
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
