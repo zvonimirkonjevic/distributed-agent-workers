@@ -18,9 +18,9 @@ def create_app() -> FastAPI:
     init_db(Config.database_url)
 
     app = FastAPI(
-        title="OpenAgent API",
+        title="Distributed Agent Workers API",
         description=(
-            "The single gateway of OpenAgent, an open-source practice project for "
+            "The single gateway of this open-source practice project for "
             "generating agent answers on workers and keeping chats intact with Postgres "
             "pub/sub. Built to run locally, single-user, with no authentication.\n\n"
             "- **Request/response** endpoints (chat sessions) are called server-to-server "

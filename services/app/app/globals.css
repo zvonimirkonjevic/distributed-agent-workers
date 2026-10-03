@@ -11,6 +11,20 @@
   --font-sans: var(--font-dm-sans);
   --font-display: var(--font-marcellus);
   --font-mono: var(--font-geist-mono);
+
+  --animate-flow-x: flow-x 2.4s linear infinite;
+  --animate-flow-y: flow-y 2.4s linear infinite;
+
+  @keyframes flow-x {
+    0% { left: 0%; opacity: 0; }
+    15%, 85% { opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
+  @keyframes flow-y {
+    0% { top: 0%; opacity: 0; }
+    15%, 85% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
 }
 
 body {

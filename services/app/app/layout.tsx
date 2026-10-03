@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OpenAgent - Distributed AI agent runtime",
+  title: "Distributed Agent Workers",
   description:
-    "Run long-lived, stateful AI agents in isolated workers and stream their progress live.",
+    "Open-source practice project: agent answers generated on worker processes, with Postgres pub/sub keeping chats intact across context switches.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
