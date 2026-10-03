@@ -6,19 +6,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 h-[72px] border-b border-zinc-200/70 bg-white">
       <nav className="mx-auto flex h-full max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-zinc-950">
-          <svg viewBox="0 0 24 24" className="h-7 w-7 text-blue-700" aria-hidden="true">
-            {/* The curved gap splits the asterisk into two interlocking halves. */}
-            <mask id="logo-split">
-              <rect width="24" height="24" fill="white" />
-              <path d="M15.3 0 C15.3 10 8.7 14 8.7 24" fill="none" stroke="black" strokeWidth="2" />
-            </mask>
-            <g mask="url(#logo-split)" stroke="currentColor" strokeWidth="4.5">
-              <line x1="12" y1="1.5" x2="12" y2="22.5" />
-              <line x1="2.9" y1="6.75" x2="21.1" y2="17.25" />
-              <line x1="2.9" y1="17.25" x2="21.1" y2="6.75" />
-            </g>
-          </svg>
+        <Link href="/" className="font-display text-2xl font-bold tracking-tight text-zinc-950">
           OpenAgent
         </Link>
         <Link
