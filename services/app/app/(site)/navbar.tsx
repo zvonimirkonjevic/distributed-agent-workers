@@ -26,6 +26,12 @@ export default function Navbar() {
           </svg>
           Source
         </a>
+        <Link
+          href="/login"
+          className="ml-8 text-[15px] font-medium text-zinc-600 transition-colors hover:text-zinc-900"
+        >
+          Log in
+        </Link>
       </nav>
     </header>
   );

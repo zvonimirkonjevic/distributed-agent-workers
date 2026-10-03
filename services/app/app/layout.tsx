@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono, Marcellus } from "next/font/google";
 import "./globals.css";
-import Navbar from "./navbar";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -31,10 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${dmSans.variable} ${marcellus.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
-        <Navbar />
-        {children}
-      </body>
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
