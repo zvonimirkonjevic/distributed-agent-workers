@@ -1,7 +1,5 @@
 import Link from "next/link";
-import type { components } from "@/lib/api/schema";
-
-type ChatSession = components["schemas"]["SessionResponse"];
+import type { ChatSession } from "./data";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -22,13 +20,17 @@ function groupByRecency(sessions: ChatSession[], now: Date) {
   return groups.filter((group) => group.items.length > 0);
 }
 
-export default function Sidebar({ sessions }: { sessions: ChatSession[] }) {
-  const groups = groupByRecency(sessions, new Date());
+export default function Sidebar({ sessions }: { sessions: ChatSession[] | null }) {
+  const groups = sessions ? groupByRecency(sessions, new Date()) : [];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <nav aria-label="Chat history" className="mt-2 min-h-0 flex-1 overflow-y-auto px-3 pb-4">
-        {groups.length === 0 ? (
+        {sessions === null ? (
+          <p className="px-2.5 text-sm leading-relaxed text-zinc-500">
+            Couldn&apos;t load chats. Check that the API is running.
+          </p>
+        ) : groups.length === 0 ? (
           <p className="px-2.5 text-sm leading-relaxed text-zinc-500">
             No chats yet. Your conversations will show up here.
           </p>
