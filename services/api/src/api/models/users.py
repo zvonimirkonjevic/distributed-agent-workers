@@ -14,12 +14,17 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    """Body of a partial user update; omitted or null fields are not changed."""
+    """Body of a partial user update; omitted or null fields are not changed.
 
+    `current_password` is always required, so a stolen session token alone
+    cannot change the account.
+    """
+
+    current_password: str
     firstname: str | None = Field(default=None, min_length=1)
     lastname: str | None = Field(default=None, min_length=1)
     email: EmailStr | None = None
-    password: str | None = Field(default=None, min_length=8)
+    new_password: str | None = Field(default=None, min_length=8)
 
 
 class UserResponse(BaseModel):

@@ -7,8 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field
 class SessionCreate(BaseModel):
     """Body of a chat session creation request."""
 
-    # Temporary until auth exists; the owner will come from the session cookie.
-    user_id: str
     title: str = Field(min_length=1)
 
 
