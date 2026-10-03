@@ -86,6 +86,11 @@ class Config:
         return os.getenv("LOG_LEVEL", "INFO")
 
     @classproperty
+    def model_id(cls) -> str:
+        """Get the chat model every session runs on, in "provider:model" form."""
+        return os.getenv("MODEL_ID", "openai:gpt-5.6-luna")
+
+    @classproperty
     def model_init_kwargs(cls) -> dict[str, dict]:
         """Extra ``init_chat_model`` kwargs for models that need non-default settings."""
         return {

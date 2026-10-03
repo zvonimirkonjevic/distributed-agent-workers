@@ -1,6 +1,7 @@
 """Deep agent wrapper that runs one session and tags its LangSmith traces."""
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import AnyMessage
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from core.agent.prompt import SYSTEM_PROMPT
@@ -61,7 +62,22 @@ class Agent:
                 config=self.config,
             )
         return response
-        
+
+    async def aget_messages(self) -> list[AnyMessage]:
+        """Load the session's full message history from its checkpoint.
+
+        deepagents stores `messages` in a DeltaChannel, so the raw checkpoint
+        holds only a sentinel and the history must be replayed through the
+        compiled graph. Building the graph does not call the model.
+
+        Returns:
+            Every message in the latest state, oldest first, including tool
+            calls and tool results; empty if the session has no runs yet.
+        """
+        async with AsyncPostgresSaver.from_conn_string(Config.postgres_psycopg_dsn) as saver:
+            snapshot = await self.create_agent(saver).aget_state(self.config)
+        return snapshot.values.get("messages", [])
+
 
     def stream_invoke(self):
         """Stream agent output. Not implemented yet."""

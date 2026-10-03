@@ -1,7 +1,7 @@
 """API gateway entrypoint; `app` is served by uvicorn."""
 from fastapi import FastAPI
 
-from api.routers import sessions
+from api.routers import messages, sessions
 from core.database import init_checkpointer_schema, init_db
 from utils.config import Config
 from utils.logger import setup_logging
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
         return {"status": "healthy"}
 
     app.include_router(sessions.router)
+    app.include_router(messages.router)
 
     return app
 
