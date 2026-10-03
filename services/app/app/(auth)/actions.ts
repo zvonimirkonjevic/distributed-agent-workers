@@ -31,7 +31,7 @@ function toFieldErrors(error: components["schemas"]["HTTPValidationError"] | und
 }
 
 async function startSession(email: string, password: string): Promise<AuthFormState | null> {
-  const { data, response } = await api.POST("/auth/login", { body: { email, password } });
+  const { data, response } = await api().POST("/auth/login", { body: { email, password } });
   if (!data) {
     const rejected = response.status === 401 || response.status === 422;
     return { message: rejected ? "Invalid email or password." : UNAVAILABLE };
@@ -63,7 +63,7 @@ export async function signup(_prev: AuthFormState, formData: FormData): Promise<
 
   let failure: AuthFormState | null;
   try {
-    const { error, response } = await api.POST("/users", { body: { ...values, password } });
+    const { error, response } = await api().POST("/users", { body: { ...values, password } });
     if (response.status === 409) {
       failure = { fieldErrors: { email: "This email is already registered." } };
     } else if (response.status === 422) {
