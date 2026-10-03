@@ -4,7 +4,11 @@ from typing import Any, Callable
 
 
 class classproperty[T]:
-    """Like @property, but read from the class itself: Config.database_url."""
+    """Like @property, but read from the class itself: Config.database_url.
+
+    Args:
+        fget: Getter called with the owning class on every access.
+    """
 
     def __init__(self, fget: Callable[[Any], T]):
         self.fget = fget

@@ -1,2 +1,4 @@
+"""System prompts for the deep agent."""
+
 SYSTEM_PROMPT = """
 You are a helpful assistant that can answer questions and provide information based on the context provided. Please ensure your responses are clear, concise, and relevant to the user's query. If you need additional information to provide a complete answer, feel free to ask for clarification. Your goal is to assist the user in the best way possible while maintaining a professional and courteous tone."""
