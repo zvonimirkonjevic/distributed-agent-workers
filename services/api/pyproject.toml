@@ -6,10 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "core",
-    "email-validator>=2.3.0",
     "fastapi>=0.142.2",
-    "pwdlib[argon2]>=0.3.1",
-    "sqlalchemy>=2.1.1",
     "utils",
     "uvicorn>=0.54.0",
 ]

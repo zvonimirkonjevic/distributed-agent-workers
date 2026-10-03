@@ -24,119 +24,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Log in with email and password
-         * @description Verify credentials and start a new session.
-         *
-         *     Returns an opaque session token for the caller to store in an httpOnly
-         *     cookie and send back as `Authorization: Bearer <token>`. An unknown email
-         *     and a wrong password both get the same 401, so responses do not reveal
-         *     which emails are registered.
-         */
-        post: operations["login_auth_login_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Log out
-         * @description Revoke the session that sent this request.
-         *
-         *     Idempotent: an unknown, expired, or already revoked token still gets 204,
-         *     since the caller ends up logged out either way.
-         */
-        post: operations["logout_auth_logout_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Register a new user
-         * @description Create a user account from a name, email, and plaintext password.
-         *
-         *     Public, since it is the sign up step; it does not log the user in. The
-         *     password is hashed with Argon2id before it is stored and is never
-         *     returned. Responds with 409 if the email is already registered, including
-         *     by a deleted account, since deleted users keep their email reserved.
-         */
-        post: operations["create_users_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get the logged-in user
-         * @description Return the profile of the user who owns the session token.
-         */
-        get: operations["read_me_users_me_get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete the logged-in user
-         * @description Soft-delete the logged-in user.
-         *
-         *     The row is kept with `deleted_at` set, so its email stays reserved, and
-         *     the user's chat sessions are not deleted. All of the user's session
-         *     tokens stop working immediately, since token checks skip deleted users.
-         */
-        delete: operations["delete_me_users_me_delete"];
-        options?: never;
-        head?: never;
-        /**
-         * Update the logged-in user
-         * @description Partially update the logged-in user's name, email, or password.
-         *
-         *     Requires the user's current password, and responds with 403 if it is
-         *     wrong; 403 rather than 401, so clients do not mistake a typo for an
-         *     expired session. Only fields present and non-null in the body are
-         *     changed. A new password is hashed before it is stored, and changing it
-         *     revokes every session of the user, including the current one, so the
-         *     client must log in again. Responds with 409 if the new email is already
-         *     registered.
-         */
-        patch: operations["update_me_users_me_patch"];
-        trace?: never;
-    };
     "/sessions": {
         parameters: {
             query?: never;
@@ -145,16 +32,16 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List my chat sessions
-         * @description Return every chat session the logged-in user owns, newest first.
+         * List chat sessions
+         * @description Return every chat session, newest first.
          *
          *     Deleted sessions are excluded.
          */
-        get: operations["list_mine_sessions_get"];
+        get: operations["list_all_sessions_get"];
         put?: never;
         /**
          * Create a chat session
-         * @description Start a new, empty chat session owned by the logged-in user.
+         * @description Start a new, empty chat session.
          */
         post: operations["create_sessions_post"];
         delete?: never;
@@ -174,8 +61,7 @@ export interface paths {
          * Get a chat session by id
          * @description Return a single chat session's metadata.
          *
-         *     Responds with 404 if the session does not exist, has been deleted, or
-         *     belongs to another user.
+         *     Responds with 404 if the session does not exist or has been deleted.
          */
         get: operations["read_sessions__session_id__get"];
         put?: never;
@@ -185,7 +71,7 @@ export interface paths {
          * @description Soft-delete a chat session so it no longer appears in any read.
          *
          *     The row is kept with `deleted_at` set. Responds with 404 if the session
-         *     does not exist, was already deleted, or belongs to another user.
+         *     does not exist or was already deleted.
          */
         delete: operations["delete_sessions__session_id__delete"];
         options?: never;
@@ -194,8 +80,7 @@ export interface paths {
          * Rename a chat session
          * @description Replace a chat session's title.
          *
-         *     Responds with 404 if the session does not exist, has been deleted, or
-         *     belongs to another user.
+         *     Responds with 404 if the session does not exist or has been deleted.
          */
         patch: operations["update_sessions__session_id__patch"];
         trace?: never;
@@ -208,32 +93,6 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /**
-         * LoginRequest
-         * @description Body of a login request.
-         */
-        LoginRequest: {
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Password */
-            password: string;
-        };
-        /**
-         * LoginResponse
-         * @description A new session token and when it expires.
-         */
-        LoginResponse: {
-            /** Token */
-            token: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
-            expires_at: string;
         };
         /**
          * SessionCreate
@@ -250,8 +109,6 @@ export interface components {
         SessionResponse: {
             /** Id */
             id: string;
-            /** User Id */
-            user_id: string;
             /** Title */
             title: string;
             /**
@@ -267,64 +124,6 @@ export interface components {
         SessionUpdate: {
             /** Title */
             title: string;
-        };
-        /**
-         * UserCreate
-         * @description Body of a user creation request.
-         */
-        UserCreate: {
-            /** Firstname */
-            firstname: string;
-            /** Lastname */
-            lastname: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Password */
-            password: string;
-        };
-        /**
-         * UserResponse
-         * @description Public view of a user; never exposes the password hash.
-         */
-        UserResponse: {
-            /** Id */
-            id: string;
-            /** Firstname */
-            firstname: string;
-            /** Lastname */
-            lastname: string;
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /**
-         * UserUpdate
-         * @description Body of a partial user update; omitted or null fields are not changed.
-         *
-         *     `current_password` is always required, so a stolen session token alone
-         *     cannot change the account.
-         */
-        UserUpdate: {
-            /** Current Password */
-            current_password: string;
-            /** Firstname */
-            firstname?: string | null;
-            /** Lastname */
-            lastname?: string | null;
-            /** Email */
-            email?: string | null;
-            /** New Password */
-            new_password?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -368,162 +167,7 @@ export interface operations {
             };
         };
     };
-    login_auth_login_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LoginResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    logout_auth_logout_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    create_users_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    read_me_users_me_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-        };
-    };
-    delete_me_users_me_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_me_users_me_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_mine_sessions_get: {
+    list_all_sessions_get: {
         parameters: {
             query?: never;
             header?: never;

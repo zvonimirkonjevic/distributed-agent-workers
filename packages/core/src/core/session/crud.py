@@ -22,21 +22,16 @@ def _get_active_chat_session(db: Session, session_id: str) -> ChatSession | None
     return db.scalars(stmt).one_or_none()
 
 
-def create_chat_session(*, user_id: str, title: str) -> ChatSession:
-    """Insert a new chat session for a user.
+def create_chat_session(*, title: str) -> ChatSession:
+    """Insert a new chat session.
 
     Args:
-        user_id: Id of the owning user.
         title: Session title.
 
     Returns:
         The new chat session, with `id` and `created_at` populated.
-
-    Raises:
-        sqlalchemy.exc.IntegrityError: If `user_id` does not reference an
-            existing user.
     """
-    chat_session = ChatSession(user_id=user_id, title=title)
+    chat_session = ChatSession(title=title)
     with session_scope() as db:
         db.add(chat_session)
     return chat_session
@@ -55,18 +50,15 @@ def get_chat_session(session_id: str) -> ChatSession | None:
         return _get_active_chat_session(db, session_id)
 
 
-def list_chat_sessions(user_id: str) -> list[ChatSession]:
-    """List a user's non-deleted chat sessions, newest first.
-
-    Args:
-        user_id: Id of the owning user.
+def list_chat_sessions() -> list[ChatSession]:
+    """List all non-deleted chat sessions, newest first.
 
     Returns:
-        The user's chat sessions; empty if there are none.
+        The chat sessions; empty if there are none.
     """
     stmt = (
         select(ChatSession)
-        .where(ChatSession.user_id == user_id, ChatSession.deleted_at.is_(None))
+        .where(ChatSession.deleted_at.is_(None))
         .order_by(ChatSession.created_at.desc())
     )
     with session_scope() as db:

@@ -22,6 +22,5 @@ class SessionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    user_id: str
     title: str
     created_at: datetime
