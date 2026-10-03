@@ -2,7 +2,6 @@
 from fastapi import FastAPI
 
 from api.routers import sessions, users
-from api.routers import users
 from core.database import init_db
 from utils.config import Config
 from utils.logger import setup_logging
@@ -19,11 +18,19 @@ def create_app() -> FastAPI:
     init_db(Config.database_url)
 
     app = FastAPI(
-        title="Distributed Agent Workers API",
+        title="OpenAgent API",
         description=(
-            "API gateway for a distributed agentic dispatch engine. Accepts agent jobs, "
-            "enqueues them to SQS for execution by an isolated worker pool, and streams "
-            "progress back to clients over WebSockets via Postgres LISTEN/NOTIFY."
+            "The single gateway of OpenAgent, a distributed agentic dispatch engine, served "
+            "behind nginx on the same origin as the web app.\n\n"
+            "- **Request/response** endpoints (users, chat sessions) are called "
+            "server-to-server by the Next.js app: Server Components for reads, Server "
+            "Actions for mutations.\n"
+            "- **Agent runs** are enqueued to SQS and executed by an isolated worker pool; "
+            "this gateway never runs agent code itself.\n"
+            "- **Streaming**: the browser opens a WebSocket to this gateway through nginx, "
+            "which forwards tokens and state transitions received via Postgres "
+            "LISTEN/NOTIFY.\n"
+            "- **Auth**: one httpOnly session cookie authenticates both paths."
         ),
         version="1.0.0"
     )
@@ -35,8 +42,6 @@ def create_app() -> FastAPI:
 
     app.include_router(users.router)
     app.include_router(sessions.router)
-
-    app.include_router(users.router)
 
     return app
 
