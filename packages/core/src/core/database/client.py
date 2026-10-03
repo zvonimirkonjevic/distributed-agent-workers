@@ -34,7 +34,9 @@ def init_db(connection_string: str):
         pool_pre_ping=True,
     )
 
-    _Session = sessionmaker(bind=_engine)
+    # Objects returned from a committed, closed `session_scope` must stay
+    # readable; expiring them on commit would force a reload on a dead session.
+    _Session = sessionmaker(bind=_engine, expire_on_commit=False)
 
     Base.metadata.create_all(_engine)
     logger.info("Database initialized successfully.")
