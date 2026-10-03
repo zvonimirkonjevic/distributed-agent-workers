@@ -73,3 +73,15 @@ class Config:
     def log_level(cls) -> str:
         """Get the minimum log level from environment variables."""
         return os.getenv("LOG_LEVEL", "INFO")
+
+    @classproperty
+    def model_init_kwargs(cls) -> dict[str, dict]:
+        """Extra ``init_chat_model`` kwargs for models that need non-default settings."""
+        return {
+            # Chat Completions rejects function tools for the gpt-5.6 family while reasoning is on;
+            # the Responses API accepts both, so reasoning stays enabled. "v0" keeps reasoning
+            # in additional_kwargs instead of content, where Gemini fallbacks fail to parse it.
+            "openai:gpt-5.6-sol": {"use_responses_api": True, "output_version": "v0"},
+            "openai:gpt-5.6-terra": {"use_responses_api": True, "output_version": "v0"},
+            "openai:gpt-5.6-luna": {"use_responses_api": True, "output_version": "v0"},
+        }
