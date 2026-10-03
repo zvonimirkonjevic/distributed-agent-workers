@@ -1,6 +1,7 @@
 """Deep agent wrapper that runs one session and tags its LangSmith traces."""
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from core.agent.prompt import SYSTEM_PROMPT
 from utils.config import Config
@@ -35,6 +36,7 @@ class Agent:
 
         self.config = {
             "recursion_limit": 10,
+            "configurable": {"thread_id": self.session_id},
             "metadata": {
                 "session_id": self.session_id,
                 "model_id": self.model_id,
@@ -42,7 +44,7 @@ class Agent:
         }
 
 
-    def invoke(self, input_text: str):
+    async def ainvoke(self, input_text: str):
         """Run the agent to completion on a single user message.
 
         Args:
@@ -52,11 +54,12 @@ class Agent:
             The final graph state, including the full message history
             under "messages".
         """
-        agent = self.create_agent() 
-        response = agent.invoke(
-            {"messages": [{"role": "user", "content": input_text}]},
-            config=self.config,
-        )
+        async with AsyncPostgresSaver.from_conn_string(Config.postgres_psycopg_dsn) as saver:
+            agent = self.create_agent(saver)
+            response = await agent.ainvoke(
+                {"messages": [{"role": "user", "content": input_text}]},
+                config=self.config,
+            )
         return response
         
 
@@ -64,7 +67,7 @@ class Agent:
         """Stream agent output. Not implemented yet."""
         pass
 
-    def create_agent(self):
+    def create_agent(self, saver: AsyncPostgresSaver):
         """Build the deep agent graph for this session's model.
 
         The chat model gets any extra kwargs registered for `model_id` in
@@ -76,6 +79,7 @@ class Agent:
         kwargs = {
             "model": init_chat_model(self.model_id, **Config.model_init_kwargs.get(self.model_id, {})),
             "system_prompt": SYSTEM_PROMPT,
+            "checkpointer": saver,
         }
 
         return create_deep_agent(**kwargs)

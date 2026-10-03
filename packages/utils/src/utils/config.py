@@ -61,6 +61,13 @@ class Config:
         )
 
     @classproperty
+    def postgres_psycopg_dsn(cls) -> str:
+        """Plain psycopg3 DSN for AsyncPostgresSaver."""
+        return cls.database_url.replace(
+            "postgresql+psycopg://", "postgresql://"
+        )
+
+    @classproperty
     def sqs_endpoint_url(cls) -> str | None:
         """Get the SQS endpoint URL, or None to use the real AWS endpoint.
 
