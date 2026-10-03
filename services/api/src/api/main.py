@@ -1,7 +1,7 @@
 """API gateway entrypoint; `app` is served by uvicorn."""
 from fastapi import FastAPI
 
-from api.routers import sessions, users
+from api.routers import auth, sessions, users
 from core.database import init_db
 from utils.config import Config
 from utils.logger import setup_logging
@@ -40,6 +40,7 @@ def create_app() -> FastAPI:
         """Report that the API process is up and serving requests."""
         return {"status": "healthy"}
 
+    app.include_router(auth.router)
     app.include_router(users.router)
     app.include_router(sessions.router)
 
