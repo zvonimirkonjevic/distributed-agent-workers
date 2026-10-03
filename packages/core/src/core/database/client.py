@@ -9,6 +9,7 @@ from loguru import logger
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from langgraph.checkpoint.postgres import PostgresSaver
 
 from core.database.models import Base
 
@@ -40,6 +41,25 @@ def init_db(connection_string: str):
 
     Base.metadata.create_all(_engine)
     logger.info("Database initialized successfully.")
+
+
+def init_checkpointer_schema(connection_string: str):
+    """Create or migrate the LangGraph checkpoint tables.
+
+    Run once from a single process (the API at startup), never from every
+    worker: concurrent runs race on `checkpoint_migrations` inserts.
+
+    Args:
+        connection_string: SQLAlchemy URL, e.g. "postgresql+psycopg://...".
+    """
+    logger.info("Initializing checkpointer schema...")
+
+    # psycopg only accepts libpq URIs, not SQLAlchemy's `+driver` suffix.
+    conninfo = connection_string.replace("postgresql+psycopg://", "postgresql://", 1)
+    with PostgresSaver.from_conn_string(conninfo) as saver:
+        saver.setup()
+
+    logger.info("Checkpointer schema initialized successfully.")
 
 
 def get_engine():
