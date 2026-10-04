@@ -85,7 +85,7 @@ export interface paths {
         patch: operations["update_sessions__session_id__patch"];
         trace?: never;
     };
-    "/sessions/{session_id}/messages": {
+    "/messages/sessions/{session_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -98,16 +98,9 @@ export interface paths {
          *
          *     Responds with 404 if the session does not exist or has been deleted.
          */
-        get: operations["list_all_sessions__session_id__messages_get"];
+        get: operations["read_messages_sessions__session_id__get"];
         put?: never;
-        /**
-         * Send a message and wait for the reply
-         * @description Run one agent turn on the message and return the assistant's reply.
-         *
-         *     Blocks until the agent finishes. Responds with 404 if the session does not
-         *     exist or has been deleted, and 502 if the agent ends without a text reply.
-         */
-        post: operations["send_sessions__session_id__messages_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -122,14 +115,6 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /**
-         * MessageCreate
-         * @description Body of a send-message request.
-         */
-        MessageCreate: {
-            /** Content */
-            content: string;
         };
         /**
          * MessageResponse
@@ -370,7 +355,7 @@ export interface operations {
             };
         };
     };
-    list_all_sessions__session_id__messages_get: {
+    read_messages_sessions__session_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -388,41 +373,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MessageResponse"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    send_sessions__session_id__messages_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                session_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MessageCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
             /** @description Validation Error */

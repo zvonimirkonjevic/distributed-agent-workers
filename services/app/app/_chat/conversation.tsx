@@ -1,10 +1,37 @@
 "use client";
 
-import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { sendMessage } from "./actions";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { createSession } from "./actions";
 import Composer from "./composer";
 import Markdown from "./markdown";
 import type { ChatMessage } from "./data";
+
+/**
+ * Send one message over the session's WebSocket and resolve with the agent's
+ * reply. The API answers each message with one JSON frame, either
+ * `{type: "reply", message}` or `{type: "error", detail}`.
+ */
+function sendOverSocket(sessionId: string, content: string): Promise<string> {
+  // FastAPI is published on port 8000 of the host serving the app, under both
+  // `bun run dev` and compose, so no extra URL config is needed locally.
+  const url = `ws://${window.location.hostname}:8000/messages/ws/sessions/${encodeURIComponent(sessionId)}`;
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocket(url);
+    socket.onopen = () => socket.send(content);
+    socket.onmessage = (event) => {
+      const frame = JSON.parse(String(event.data));
+      if (frame.type === "reply") {
+        resolve(frame.message.content);
+      } else {
+        reject(new Error(`agent error: detail=${frame.detail}`));
+      }
+      socket.close();
+    };
+    // After a reply, close fires too, but rejecting a settled promise is a no-op.
+    socket.onclose = (event) => reject(new Error(`websocket closed before reply: code=${event.code}`));
+  });
+}
 
 function Avatar({ role }: { role: ChatMessage["role"] }) {
   if (role === "user") {
@@ -53,10 +80,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 /**
- * Messages come from the server; while a send is in flight the user's message
- * is shown optimistically and a thinking indicator stands in for the reply.
- * When the action finishes, the server re-render replaces both with the
- * persisted history.
+ * History comes from the server; sent messages and replies are appended
+ * locally as they happen. A new chat creates its session first and opens it
+ * once the reply arrives.
  */
 export default function Conversation({
   sessionId,
@@ -65,30 +91,49 @@ export default function Conversation({
   sessionId: string | null;
   messages: ChatMessage[];
 }) {
-  const [optimisticMessages, addOptimisticMessage] = useOptimistic(
-    messages,
-    (current: ChatMessage[], sent: ChatMessage) => [...current, sent],
-  );
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const [history, setHistory] = useState(messages);
+  const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [optimisticMessages.length, isPending]);
+  }, [history.length, isPending]);
 
-  function handleSend(content: string) {
+  async function handleSend(content: string) {
+    const text = content.trim();
+    if (!text) {
+      return;
+    }
     setError(null);
-    startTransition(async () => {
-      addOptimisticMessage({ id: `pending-${Date.now()}`, role: "user", content });
-      const result = await sendMessage(sessionId, content);
-      if (result?.error) {
-        setError(result.error);
+    setIsPending(true);
+    setHistory((current) => [...current, { id: `user-${Date.now()}`, role: "user", content: text }]);
+    try {
+      let id = sessionId;
+      if (id === null) {
+        const result = await createSession(text);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        id = result.id;
       }
-    });
+
+      const reply = await sendOverSocket(id, text);
+      setHistory((current) => [...current, { id: `assistant-${Date.now()}`, role: "assistant", content: reply }]);
+
+      if (sessionId === null) {
+        router.push(`/sessions/${id}`);
+      }
+    } catch {
+      setError("The agent couldn't reply. Try again.");
+    } finally {
+      setIsPending(false);
+    }
   }
 
-  if (optimisticMessages.length === 0) {
+  if (history.length === 0) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-[12vh]">
         <h1 className="text-center font-display text-3xl text-zinc-950 sm:text-4xl">What are we working on?</h1>
@@ -104,7 +149,7 @@ export default function Conversation({
     <main className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
-          {optimisticMessages.map((message) => (
+          {history.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
           {isPending && (

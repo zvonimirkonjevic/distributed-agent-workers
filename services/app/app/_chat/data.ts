@@ -52,7 +52,7 @@ export async function getSession(sessionId: string): Promise<ChatSession | null>
  */
 export async function listMessages(sessionId: string): Promise<ChatMessage[] | null> {
   try {
-    const { data } = await api().GET("/sessions/{session_id}/messages", {
+    const { data } = await api().GET("/messages/sessions/{session_id}", {
       params: { path: { session_id: sessionId } },
     });
     return data ?? null;
