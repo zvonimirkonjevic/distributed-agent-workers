@@ -5,17 +5,48 @@ import { sendMessage } from "./actions";
 import Composer from "./composer";
 import type { ChatMessage } from "./data";
 
+function Avatar({ role }: { role: ChatMessage["role"] }) {
+  if (role === "user") {
+    return (
+      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-zinc-600">
+        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="8" cy="5.5" r="2.75" />
+          <path d="M2.75 14a5.25 5.25 0 0 1 10.5 0" />
+        </svg>
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white">
+      <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
+        <path d="M8 1.5c.4 3.1 1.9 4.6 5 5-3.1.4-4.6 1.9-5 5-.4-3.1-1.9-4.6-5-5 3.1-.4 4.6-1.9 5-5Z" />
+        <path d="M12.75 10.5c.15 1.2.75 1.8 1.75 2-1 .2-1.6.8-1.75 2-.15-1.2-.75-1.8-1.75-2 1-.2 1.6-.8 1.75-2Z" />
+      </svg>
+    </span>
+  );
+}
+
 function MessageBubble({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return (
-      <div className="flex justify-end">
+      <div className="flex items-start justify-end gap-3">
         <p className="max-w-[85%] rounded-3xl bg-zinc-100 px-4 py-2.5 text-[15px] whitespace-pre-wrap text-zinc-950">
           {message.content}
         </p>
+        {/* Centers the avatar on the bubble's first line: (44px bubble - 32px avatar) / 2. */}
+        <span className="mt-1.5">
+          <Avatar role="user" />
+        </span>
       </div>
     );
   }
-  return <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-zinc-900">{message.content}</p>;
+  return (
+    <div className="flex items-start gap-3">
+      <Avatar role="assistant" />
+      {/* pt aligns the first text line with the avatar's center. */}
+      <p className="min-w-0 pt-1 text-[15px] leading-relaxed whitespace-pre-wrap text-zinc-900">{message.content}</p>
+    </div>
+  );
 }
 
 /**
@@ -76,7 +107,12 @@ export default function Conversation({
           {optimisticMessages.map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
-          {isPending && <p className="animate-pulse text-[15px] text-zinc-500">Thinking…</p>}
+          {isPending && (
+            <div className="flex items-start gap-3">
+              <Avatar role="assistant" />
+              <p className="animate-pulse pt-1 text-[15px] text-zinc-500">Thinking…</p>
+            </div>
+          )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div ref={endRef} />
         </div>
