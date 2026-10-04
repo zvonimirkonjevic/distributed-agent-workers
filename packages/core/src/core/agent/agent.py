@@ -44,7 +44,6 @@ class Agent:
             }
         }
 
-
     async def ainvoke(self, input_text: str):
         """Run the agent to completion on a single user message.
 

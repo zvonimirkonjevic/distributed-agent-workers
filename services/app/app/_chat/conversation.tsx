@@ -3,6 +3,7 @@
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { sendMessage } from "./actions";
 import Composer from "./composer";
+import Markdown from "./markdown";
 import type { ChatMessage } from "./data";
 
 function Avatar({ role }: { role: ChatMessage["role"] }) {
@@ -44,7 +45,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     <div className="flex items-start gap-3">
       <Avatar role="assistant" />
       {/* pt aligns the first text line with the avatar's center. */}
-      <p className="min-w-0 pt-1 text-[15px] leading-relaxed whitespace-pre-wrap text-zinc-900">{message.content}</p>
+      <div className="min-w-0 flex-1 pt-1">
+        <Markdown>{message.content}</Markdown>
+      </div>
     </div>
   );
 }
