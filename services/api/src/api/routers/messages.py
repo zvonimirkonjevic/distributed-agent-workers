@@ -9,49 +9,50 @@ code" constraint on purpose, to get the app, API, and agent connected first.
 When the worker pool lands, `send` becomes "enqueue to SQS, return task_id"
 and the reply arrives through LISTEN/NOTIFY instead.
 """
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.concurrency import run_in_threadpool
+
 from loguru import logger
 
-from api.models.messages import MessageCreate, MessageResponse
-from core.agent import Agent, get_chat_messages, to_chat_messages
+from api.models.messages import MessageResponse
+from core.agent import Agent, to_chat_messages
 from core.session import get_chat_session
-from utils.config import Config
-
-router = APIRouter(prefix="/sessions/{session_id}/messages", tags=["Messages"])
-
-_SESSION_NOT_FOUND = "session not found"
 
 
-async def _require_session(session_id: str):
-    # The CRUD layer is blocking; keep it off the event loop.
-    if await run_in_threadpool(get_chat_session, session_id) is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, _SESSION_NOT_FOUND)
+router = APIRouter(prefix="/messages", tags=["messages"])
 
-
-@router.get("", response_model=list[MessageResponse], summary="List a session's messages")
-async def list_all(session_id: str):
+@router.get("/sessions/{session_id}", response_model=list[MessageResponse], summary="List a session's messages")
+async def read(session_id: str):
     """Return the session's user and assistant messages, oldest first.
 
     Responds with 404 if the session does not exist or has been deleted.
     """
-    await _require_session(session_id)
-    return await get_chat_messages(session_id)
+    # The CRUD layer is blocking; keep it off the event loop.
+    if await run_in_threadpool(get_chat_session, session_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "session not found")
+
+    messages = await Agent(session_id, "openai:gpt-5.6-luna").aget_messages()
+    return to_chat_messages(messages)
 
 
-@router.post("", response_model=MessageResponse, summary="Send a message and wait for the reply")
-async def send(session_id: str, body: MessageCreate):
-    """Run one agent turn on the message and return the assistant's reply.
+@router.websocket("/ws/sessions/{session_id}")
+async def send(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    if await run_in_threadpool(get_chat_session, session_id) is None:
+          await websocket.close(code=4404, reason="session not found")
+          return
 
-    Blocks until the agent finishes. Responds with 404 if the session does not
-    exist or has been deleted, and 502 if the agent ends without a text reply.
-    """
-    await _require_session(session_id)
+    agent = Agent(session_id, model_id="openai:gpt-5.6-luna")
+    try:
+        while True:
+            content = await websocket.receive_text()
+            response = await agent.ainvoke(content)
+            reply = to_chat_messages(response["messages"])[-1]
+            if reply["role"] != "assistant":
+                logger.error(f"agent turn ended without assistant text: session_id={session_id}")
+                await websocket.send_json({"type": "error", "detail": "agent returned no reply"})
+                continue
+            await websocket.send_json({"type": "reply", "message": reply})
 
-    state = await Agent(session_id, Config.model_id).ainvoke(body.content)
-
-    reply = to_chat_messages(state["messages"])[-1]
-    if reply["role"] != "assistant":
-        logger.error(f"agent turn ended without assistant text: session_id={session_id}")
-        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "agent returned no reply")
-    return reply
+    except WebSocketDisconnect:
+        logger.info(f"websocket closed: session_id={session_id}")

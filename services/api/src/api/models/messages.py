@@ -1,4 +1,4 @@
-"""Request and response schemas for the `/sessions/{session_id}/messages` endpoints."""
+"""Request and response schemas for the `/messages` endpoints."""
 from typing import Literal
 
 from pydantic import BaseModel, Field
