@@ -17,9 +17,6 @@ const components: Components = {
 };
 
 /**
- * Render an assistant reply's Markdown, including GitHub extensions (tables,
- * strikethrough, task lists).
- *
  * Raw HTML in the reply is ignored, not rendered, so model output can never
  * inject markup or scripts.
  */

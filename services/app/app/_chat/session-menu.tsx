@@ -4,8 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteSession } from "./actions";
 
 /**
- * The "more options" button on a sidebar chat row and its menu.
- *
  * The button only shows while its row is hovered, focused, or the menu is
  * open; on touch screens, which cannot hover, it is always visible.
  */

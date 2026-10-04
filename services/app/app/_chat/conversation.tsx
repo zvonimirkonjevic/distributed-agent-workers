@@ -53,9 +53,6 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 /**
- * The message list and composer for one chat, or for a new chat when
- * `sessionId` is null.
- *
  * Messages come from the server; while a send is in flight the user's message
  * is shown optimistically and a thinking indicator stands in for the reply.
  * When the action finishes, the server re-render replaces both with the

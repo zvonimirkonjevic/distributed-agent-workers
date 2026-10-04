@@ -19,7 +19,6 @@ function Connector() {
   );
 }
 
-/** A left-to-right flow of nodes (top-to-bottom below lg) with animated connectors. */
 export default function FlowDiagram({ title, start, nodes }: { title: string; start: number; nodes: DiagramNode[] }) {
   return (
     <figure>
