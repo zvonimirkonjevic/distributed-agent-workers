@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ChatSession } from "./data";
+import SessionMenu from "./session-menu";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -40,15 +41,16 @@ export default function Sidebar({ sessions, activeId }: { sessions: ChatSession[
               <h2 className="px-2.5 pb-1.5 text-xs font-medium text-zinc-500">{group.label}</h2>
               <ul>
                 {group.items.map((session) => (
-                  <li key={session.id}>
+                  <li key={session.id} className="group relative">
                     <Link
                       href={`/sessions/${session.id}`}
                       title={session.title}
                       aria-current={session.id === activeId ? "page" : undefined}
-                      className="block w-full truncate rounded-lg px-2.5 py-2 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60 aria-[current=page]:bg-zinc-200/80 aria-[current=page]:text-zinc-950"
+                      className="block w-full truncate rounded-lg py-2 pr-9 pl-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60 aria-[current=page]:bg-zinc-200/80 aria-[current=page]:text-zinc-950"
                     >
                       {session.title}
                     </Link>
+                    <SessionMenu sessionId={session.id} title={session.title} isActive={session.id === activeId} />
                   </li>
                 ))}
               </ul>

@@ -54,3 +54,31 @@ export async function sendMessage(sessionId: string | null, content: string): Pr
   }
   refresh();
 }
+
+export type DeleteSessionResult = { error: string } | undefined;
+
+/**
+ * Soft-delete a chat session.
+ *
+ * Deleting the chat currently on screen sends the user to a new chat, since
+ * its page would now 404; otherwise the current page re-renders without it.
+ */
+export async function deleteSession(sessionId: string, isActive: boolean): Promise<DeleteSessionResult> {
+  try {
+    const { response } = await api().DELETE("/sessions/{session_id}", {
+      params: { path: { session_id: sessionId } },
+    });
+    // 404 means it is already gone, which is the outcome the user asked for.
+    if (!response.ok && response.status !== 404) {
+      return { error: "Couldn't delete this chat. Try again." };
+    }
+  } catch {
+    return { error: "Couldn't reach the API. Check that it is running." };
+  }
+
+  // Outside the try block: redirect works by throwing.
+  if (isActive) {
+    redirect("/");
+  }
+  refresh();
+}
