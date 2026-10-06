@@ -28,17 +28,17 @@ export default function Sidebar({ sessions, activeId }: { sessions: ChatSession[
     <div className="flex min-h-0 flex-1 flex-col">
       <nav aria-label="Chat history" className="mt-2 min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         {sessions === null ? (
-          <p className="px-2.5 text-sm leading-relaxed text-zinc-500">
+          <p className="px-2.5 text-sm leading-relaxed text-ink-muted">
             Couldn&apos;t load chats. Check that the API is running.
           </p>
         ) : groups.length === 0 ? (
-          <p className="px-2.5 text-sm leading-relaxed text-zinc-500">
+          <p className="px-2.5 text-sm leading-relaxed text-ink-muted">
             No chats yet. Your conversations will show up here.
           </p>
         ) : (
           groups.map((group) => (
             <section key={group.label} className="mb-5">
-              <h2 className="px-2.5 pb-1.5 text-xs font-medium text-zinc-500">{group.label}</h2>
+              <h2 className="px-2.5 pb-1.5 text-xs font-medium text-ink-muted">{group.label}</h2>
               <ul>
                 {group.items.map((session) => (
                   <li key={session.id} className="group relative">
@@ -46,7 +46,7 @@ export default function Sidebar({ sessions, activeId }: { sessions: ChatSession[
                       href={`/sessions/${session.id}`}
                       title={session.title}
                       aria-current={session.id === activeId ? "page" : undefined}
-                      className="block w-full truncate rounded-lg py-2 pr-9 pl-2.5 text-left text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60 aria-[current=page]:bg-zinc-200/80 aria-[current=page]:text-zinc-950"
+                      className="block w-full truncate rounded-lg py-2 pr-9 pl-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-ink/5 aria-[current=page]:bg-ink/[0.07] aria-[current=page]:text-ink"
                     >
                       {session.title}
                     </Link>
@@ -59,10 +59,10 @@ export default function Sidebar({ sessions, activeId }: { sessions: ChatSession[
         )}
       </nav>
 
-      <div className="border-t border-zinc-200 p-3">
+      <div className="border-t border-line p-3">
         <Link
           href="/about"
-          className="flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-200/60"
+          className="flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-ink-soft transition-colors hover:bg-ink/5"
         >
           <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
             <circle cx="8" cy="8" r="6" />

@@ -73,7 +73,7 @@ function streamOverSocket(sessionId: string, content: string, onFrame: (frame: S
 function Avatar({ role }: { role: ChatMessage["role"] }) {
   if (role === "user") {
     return (
-      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-zinc-600">
+      <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/10 text-ink-soft">
         <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
           <circle cx="8" cy="5.5" r="2.75" />
           <path d="M2.75 14a5.25 5.25 0 0 1 10.5 0" />
@@ -82,7 +82,7 @@ function Avatar({ role }: { role: ChatMessage["role"] }) {
     );
   }
   return (
-    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-950 text-white">
+    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink text-white">
       <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
         <path d="M8 1.5c.4 3.1 1.9 4.6 5 5-3.1.4-4.6 1.9-5 5-.4-3.1-1.9-4.6-5-5 3.1-.4 4.6-1.9 5-5Z" />
         <path d="M12.75 10.5c.15 1.2.75 1.8 1.75 2-1 .2-1.6.8-1.75 2-.15-1.2-.75-1.8-1.75-2 1-.2 1.6-.8 1.75-2Z" />
@@ -123,7 +123,7 @@ function ToolStepRow({ step }: { step: ToolStep }) {
   return (
     // pl matches the assistant bubble's text column: 32px avatar + 12px gap.
     <details className="group pl-11">
-      <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-full text-sm text-zinc-500 transition-colors hover:text-zinc-950 [&::-webkit-details-marker]:hidden">
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-full text-sm text-ink-muted transition-colors hover:text-ink [&::-webkit-details-marker]:hidden">
         <span className={isRunning ? "animate-pulse" : undefined}>
           {isRunning ? "Using" : "Used"} <code className="font-mono text-[13px]">{step.tool}</code>
         </span>
@@ -131,17 +131,17 @@ function ToolStepRow({ step }: { step: ToolStep }) {
           <path d="m4 6 4 4 4-4" />
         </svg>
       </summary>
-      <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-xs">
+      <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-line bg-canvas p-3 text-xs">
         <section>
-          <h3 className="mb-1 font-medium text-zinc-500">Input</h3>
-          <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-zinc-800">{formatPayload(step.inputs)}</pre>
+          <h3 className="mb-1 font-medium text-ink-muted">Input</h3>
+          <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-ink">{formatPayload(step.inputs)}</pre>
         </section>
         <section>
-          <h3 className="mb-1 font-medium text-zinc-500">Output</h3>
+          <h3 className="mb-1 font-medium text-ink-muted">Output</h3>
           {isRunning ? (
-            <p className="text-zinc-400">Waiting for result…</p>
+            <p className="text-ink-faint">Waiting for result…</p>
           ) : (
-            <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-zinc-800">{formatPayload(step.output)}</pre>
+            <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-ink">{formatPayload(step.output)}</pre>
           )}
         </section>
       </div>
@@ -153,7 +153,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return (
       <div className="flex items-start justify-end gap-3">
-        <p className="max-w-[85%] rounded-3xl bg-zinc-100 px-4 py-2.5 text-[15px] whitespace-pre-wrap text-zinc-950">
+        <p className="max-w-[85%] rounded-3xl bg-canvas px-4 py-2.5 text-[15px] whitespace-pre-wrap text-ink">
           {message.content}
         </p>
         {/* Centers the avatar on the bubble's first line: (44px bubble - 32px avatar) / 2. */}
@@ -257,7 +257,7 @@ export default function Conversation({
   if (history.length === 0) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-[12vh]">
-        <h1 className="text-center font-display text-3xl text-zinc-950 sm:text-4xl">What are we working on?</h1>
+        <h1 className="text-center font-medium tracking-tightest text-3xl text-ink sm:text-4xl">What are we working on?</h1>
         <div className="mt-8 w-full max-w-2xl">
           <Composer onSend={handleSend} disabled={isPending} streaming={streaming} onStreamingChange={setStreaming} />
           {error && <p className="mt-3 px-5 text-sm text-red-600">{error}</p>}
@@ -280,7 +280,7 @@ export default function Conversation({
           {isPending && (
             <div className="flex items-start gap-3">
               <Avatar role="assistant" />
-              <p className="animate-pulse pt-1 text-[15px] text-zinc-500">Thinking…</p>
+              <p className="animate-pulse pt-1 text-[15px] text-ink-muted">Thinking…</p>
             </div>
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}

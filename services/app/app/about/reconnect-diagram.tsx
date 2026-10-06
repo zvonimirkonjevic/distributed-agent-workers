@@ -1,11 +1,11 @@
 type Status = "live" | "offline" | "running" | "saved" | "replay";
 
 const STATUS_STYLES: Record<Status, string> = {
-  live: "bg-blue-50 text-blue-700 ring-blue-200",
-  running: "bg-blue-50 text-blue-700 ring-blue-200",
-  replay: "bg-amber-50 text-amber-700 ring-amber-200",
-  saved: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  offline: "bg-zinc-100 text-zinc-500 ring-zinc-200",
+  live: "bg-teal/10 text-teal ring-teal/20",
+  running: "bg-teal/10 text-teal ring-teal/20",
+  replay: "bg-warning-soft text-warning ring-warning/20",
+  saved: "bg-success-soft text-success ring-success/20",
+  offline: "bg-canvas text-ink-muted ring-line",
 };
 
 const STAGES: { title: string; browser: [Status, string]; worker: [Status, string]; caption: string }[] = [
@@ -51,16 +51,16 @@ export default function ReconnectDiagram() {
   return (
     <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {STAGES.map((stage, i) => (
-        <li key={stage.title} className="flex flex-col rounded-xl border border-zinc-200 bg-white p-4">
-          <span className="font-mono text-[11px] text-zinc-400">0{i + 1}</span>
-          <p className="mt-1 font-medium text-zinc-950">{stage.title}</p>
-          <dl className="mt-4 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 text-xs text-zinc-500">
+        <li key={stage.title} className="flex flex-col rounded-xl border border-line bg-surface p-4">
+          <span className="font-mono text-[11px] text-ink-faint">0{i + 1}</span>
+          <p className="mt-1 font-medium text-ink">{stage.title}</p>
+          <dl className="mt-4 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 text-xs text-ink-muted">
             <dt>Browser</dt>
             <dd><Chip status={stage.browser[0]} label={stage.browser[1]} /></dd>
             <dt>Worker</dt>
             <dd><Chip status={stage.worker[0]} label={stage.worker[1]} /></dd>
           </dl>
-          <p className="mt-4 text-sm leading-snug text-zinc-600">{stage.caption}</p>
+          <p className="mt-4 text-sm leading-snug text-ink-soft">{stage.caption}</p>
         </li>
       ))}
     </ol>

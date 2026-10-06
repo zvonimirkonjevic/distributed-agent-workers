@@ -24,14 +24,14 @@ export default function Markdown({ children }: { children: string }) {
   return (
     <div
       className={[
-        "prose prose-zinc max-w-none min-w-0 text-[15px] leading-relaxed text-zinc-900",
+        "prose prose-zinc max-w-none min-w-0 text-[15px] leading-relaxed text-ink",
         // Prose spacing is tuned for articles; tighten it for chat and drop the
         // outer margins so the first line stays aligned with the avatar.
         "prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-headings:mt-4 prose-headings:mb-2",
-        "prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-zinc-950 prose-pre:text-[13px]",
+        "prose-pre:my-3 prose-pre:rounded-xl prose-pre:bg-ink prose-pre:text-[13px]",
         "[&>:first-child]:mt-0 [&>:last-child]:mb-0",
         // Inline code gets a tinted chip instead of prose's literal backticks.
-        "prose-code:rounded prose-code:bg-zinc-100 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal",
+        "prose-code:rounded prose-code:bg-canvas prose-code:px-1 prose-code:py-0.5 prose-code:font-normal",
         "prose-code:before:content-none prose-code:after:content-none",
         "[&_pre_code]:bg-transparent [&_pre_code]:p-0",
       ].join(" ")}

@@ -64,7 +64,7 @@ export default function SessionMenu({
         aria-label={`More options for ${title}`}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-7 w-7 items-center justify-center rounded-md text-zinc-500 transition-colors group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-zinc-300/60 hover:text-zinc-900 [@media(hover:none)]:opacity-100 ${
+        className={`flex h-7 w-7 items-center justify-center rounded-md text-ink-muted transition-colors group-hover:opacity-100 group-focus-within:opacity-100 hover:bg-ink/10 hover:text-ink [@media(hover:none)]:opacity-100 ${
           open ? "opacity-100" : "opacity-0"
         }`}
       >
@@ -78,7 +78,7 @@ export default function SessionMenu({
       {open && (
         <div
           role="menu"
-          className="absolute top-full right-0 z-10 mt-1 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg"
+          className="absolute top-full right-0 z-10 mt-1 w-44 rounded-xl border border-line bg-surface p-1 shadow-lg"
         >
           <button
             type="button"

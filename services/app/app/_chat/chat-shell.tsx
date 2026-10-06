@@ -9,7 +9,7 @@ function SidebarToggle({ onClick, label }: { onClick: () => void; label: string 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900"
+      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-ink/5 hover:text-ink"
     >
       <svg viewBox="0 0 16 16" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
         <rect x="2" y="2.5" width="12" height="11" rx="2" />
@@ -34,18 +34,18 @@ export default function ChatShell({ sidebar, children }: { sidebar: ReactNode; c
         <div
           aria-hidden="true"
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-30 bg-zinc-950/20 md:hidden"
+          className="fixed inset-0 z-30 bg-ink/20 md:hidden"
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-zinc-200 bg-zinc-50 transition-transform md:static md:z-auto md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-line bg-canvas transition-transform md:static md:z-auto md:translate-x-0 md:border-r-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${desktopOpen ? "md:flex" : "md:hidden"}`}
       >
         <div className="flex h-14 shrink-0 items-center gap-1 px-3">
           <Link
             href="/"
-            className="flex h-9 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-200/60"
+            className="flex h-9 flex-1 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-ink transition-colors hover:bg-ink/5"
           >
             <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M8 3H4.5A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13h7a1.5 1.5 0 0 0 1.5-1.5V8" />
@@ -63,7 +63,12 @@ export default function ChatShell({ sidebar, children }: { sidebar: ReactNode; c
         {sidebar}
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      {/* On md+, the chat is a white panel inset on the canvas, with the sidebar on the canvas itself. */}
+      <div
+        className={`flex min-w-0 flex-1 flex-col bg-surface md:my-2 md:mr-2 md:rounded-2xl md:border md:border-line md:shadow-sm md:overflow-hidden ${
+          desktopOpen ? "" : "md:ml-2"
+        }`}
+      >
         <div className="flex h-14 shrink-0 items-center px-3">
           <span className="md:hidden">
             <SidebarToggle label="Open sidebar" onClick={() => setMobileOpen(true)} />

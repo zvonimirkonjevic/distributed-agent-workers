@@ -2,16 +2,32 @@
 @plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f4f5;
+  --foreground: #1a1c21;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-dm-sans);
-  --font-display: var(--font-marcellus);
+  --font-sans: var(--font-inter-tight);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand palette: warm neutrals, hairline borders, teal accent. */
+  --color-ink: #1a1c21;
+  --color-ink-soft: #505655;
+  --color-ink-muted: #66716f;
+  --color-ink-faint: #9ba3a1;
+  --color-canvas: #f4f4f5;
+  --color-surface: #ffffff;
+  --color-line: rgb(26 28 33 / 0.1);
+  --color-line-soft: rgb(26 28 33 / 0.06);
+  --color-teal: #144c5e;
+  --color-success: #114e0b;
+  --color-success-soft: #cef5ca;
+  --color-warning: #5e5515;
+  --color-warning-soft: #fcf8d8;
+
+  --tracking-tightest: -0.04em;
 
   --animate-flow-x: flow-x 2.4s linear infinite;
   --animate-flow-y: flow-y 2.4s linear infinite;
@@ -31,4 +47,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Layered so tracking-* utilities can still override it on headings. */
+@layer base {
+  body {
+    letter-spacing: -0.01em;
+  }
 }
