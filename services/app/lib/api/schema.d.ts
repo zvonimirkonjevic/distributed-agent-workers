@@ -85,7 +85,7 @@ export interface paths {
         patch: operations["update_sessions__session_id__patch"];
         trace?: never;
     };
-    "/messages/sessions/{session_id}": {
+    "/sessions/{session_id}/messages": {
         parameters: {
             query?: never;
             header?: never;
@@ -98,7 +98,7 @@ export interface paths {
          *
          *     Responds with 404 if the session does not exist or has been deleted.
          */
-        get: operations["read_messages_sessions__session_id__get"];
+        get: operations["list_all_sessions__session_id__messages_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -355,7 +355,7 @@ export interface operations {
             };
         };
     };
-    read_messages_sessions__session_id__get: {
+    list_all_sessions__session_id__messages_get: {
         parameters: {
             query?: never;
             header?: never;

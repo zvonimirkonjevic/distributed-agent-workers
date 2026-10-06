@@ -15,7 +15,7 @@ import type { ChatMessage } from "./data";
 function socketUrl(sessionId: string, path = ""): string {
   // FastAPI is published on port 8000 of the host serving the app, under both
   // `bun run dev` and compose, so no extra URL config is needed locally.
-  return `ws://${window.location.hostname}:8000/messages/ws/sessions/${encodeURIComponent(sessionId)}${path}`;
+  return `ws://${window.location.hostname}:8000/sessions/${encodeURIComponent(sessionId)}/messages${path}`;
 }
 
 function sendOverSocket(sessionId: string, content: string): Promise<string> {

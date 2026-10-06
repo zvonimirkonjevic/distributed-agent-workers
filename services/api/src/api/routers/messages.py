@@ -19,10 +19,10 @@ from core.agent import Agent, to_chat_messages
 from core.session import get_chat_session
 
 
-router = APIRouter(prefix="/messages", tags=["messages"])
+router = APIRouter(prefix="/sessions/{session_id}/messages", tags=["Messages"])
 
-@router.get("/sessions/{session_id}", response_model=list[MessageResponse], summary="List a session's messages")
-async def read(session_id: str):
+@router.get("", response_model=list[MessageResponse], summary="List a session's messages")
+async def list_all(session_id: str):
     """Return the session's user and assistant messages, oldest first.
 
     Responds with 404 if the session does not exist or has been deleted.
@@ -35,8 +35,8 @@ async def read(session_id: str):
     return to_chat_messages(messages)
 
 
-@router.websocket("/ws/sessions/{session_id}")
-async def ainvoke(websocket: WebSocket, session_id: str):
+@router.websocket("")
+async def send(websocket: WebSocket, session_id: str):
     await websocket.accept()
     if await run_in_threadpool(get_chat_session, session_id) is None:
           await websocket.close(code=4404, reason="session not found")
@@ -63,8 +63,8 @@ async def ainvoke(websocket: WebSocket, session_id: str):
         logger.info(f"websocket closed: session_id={session_id}")
 
 
-@router.websocket("/ws/sessions/{session_id}/stream")
-async def astream(websocket: WebSocket, session_id: str):
+@router.websocket("/stream")
+async def stream(websocket: WebSocket, session_id: str):
     await websocket.accept()
     if await run_in_threadpool(get_chat_session, session_id) is None:
           await websocket.close(code=4404, reason="session not found")
