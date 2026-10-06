@@ -36,7 +36,7 @@ async def read(session_id: str):
 
 
 @router.websocket("/ws/sessions/{session_id}")
-async def send(websocket: WebSocket, session_id: str):
+async def ainvoke(websocket: WebSocket, session_id: str):
     await websocket.accept()
     if await run_in_threadpool(get_chat_session, session_id) is None:
           await websocket.close(code=4404, reason="session not found")
@@ -46,13 +46,44 @@ async def send(websocket: WebSocket, session_id: str):
     try:
         while True:
             content = await websocket.receive_text()
-            response = await agent.ainvoke(content)
+            try:
+                response = await agent.ainvoke(content)
+            except Exception:
+                logger.exception(f"agent run failed: session_id={session_id}")
+                await websocket.send_json({"type": "error", "detail": "agent run failed"})
+                continue
             reply = to_chat_messages(response["messages"])[-1]
             if reply["role"] != "assistant":
                 logger.error(f"agent turn ended without assistant text: session_id={session_id}")
                 await websocket.send_json({"type": "error", "detail": "agent returned no reply"})
                 continue
             await websocket.send_json({"type": "reply", "message": reply})
+
+    except WebSocketDisconnect:
+        logger.info(f"websocket closed: session_id={session_id}")
+
+
+@router.websocket("/ws/sessions/{session_id}/stream")
+async def astream(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    if await run_in_threadpool(get_chat_session, session_id) is None:
+          await websocket.close(code=4404, reason="session not found")
+          return
+
+    agent = Agent(session_id, model_id="openai:gpt-5.6-luna")
+    try:
+        while True:
+            content = await websocket.receive_text()
+            try:
+                async for frame in agent.astream(content):
+                    await websocket.send_json(frame)
+            except WebSocketDisconnect:
+                raise
+            except Exception:
+                logger.exception(f"agent run failed: session_id={session_id}")
+                await websocket.send_json({"type": "error", "detail": "agent run failed"})
+                continue
+            await websocket.send_json({"type": "done"})
 
     except WebSocketDisconnect:
         logger.info(f"websocket closed: session_id={session_id}")
