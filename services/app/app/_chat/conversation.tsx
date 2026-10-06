@@ -12,10 +12,14 @@ import type { ChatMessage } from "./data";
  * reply. The API answers each message with one JSON frame, either
  * `{type: "reply", message}` or `{type: "error", detail}`.
  */
-function sendOverSocket(sessionId: string, content: string): Promise<string> {
+function socketUrl(sessionId: string, path = ""): string {
   // FastAPI is published on port 8000 of the host serving the app, under both
   // `bun run dev` and compose, so no extra URL config is needed locally.
-  const url = `ws://${window.location.hostname}:8000/messages/ws/sessions/${encodeURIComponent(sessionId)}`;
+  return `ws://${window.location.hostname}:8000/messages/ws/sessions/${encodeURIComponent(sessionId)}${path}`;
+}
+
+function sendOverSocket(sessionId: string, content: string): Promise<string> {
+  const url = socketUrl(sessionId);
   return new Promise((resolve, reject) => {
     const socket = new WebSocket(url);
     socket.onopen = () => socket.send(content);
@@ -30,6 +34,39 @@ function sendOverSocket(sessionId: string, content: string): Promise<string> {
     };
     // After a reply, close fires too, but rejecting a settled promise is a no-op.
     socket.onclose = (event) => reject(new Error(`websocket closed before reply: code=${event.code}`));
+  });
+}
+
+type StreamFrame =
+  | { type: "content"; id: string; text: string }
+  | { type: "tool_call"; id: string; tool: string; inputs: unknown }
+  | { type: "tool_result"; tool_call_id: string; tool: string; content: unknown }
+  | { type: "done" }
+  | { type: "error"; detail: string };
+
+/**
+ * Send one message over the session's streaming WebSocket, passing each agent
+ * step to `onFrame` as it completes. Resolves on `done`, rejects on `error`.
+ */
+function streamOverSocket(sessionId: string, content: string, onFrame: (frame: StreamFrame) => void): Promise<void> {
+  const url = socketUrl(sessionId, "/stream");
+  return new Promise((resolve, reject) => {
+    const socket = new WebSocket(url);
+    socket.onopen = () => socket.send(content);
+    socket.onmessage = (event) => {
+      const frame: StreamFrame = JSON.parse(String(event.data));
+      if (frame.type === "done") {
+        resolve();
+        socket.close();
+      } else if (frame.type === "error") {
+        reject(new Error(`agent error: detail=${frame.detail}`));
+        socket.close();
+      } else {
+        onFrame(frame);
+      }
+    };
+    // After done, close fires too, but rejecting a settled promise is a no-op.
+    socket.onclose = (event) => reject(new Error(`websocket closed before done: code=${event.code}`));
   });
 }
 
@@ -51,6 +88,64 @@ function Avatar({ role }: { role: ChatMessage["role"] }) {
         <path d="M12.75 10.5c.15 1.2.75 1.8 1.75 2-1 .2-1.6.8-1.75 2-.15-1.2-.75-1.8-1.75-2 1-.2 1.6-.8 1.75-2Z" />
       </svg>
     </span>
+  );
+}
+
+/**
+ * A tool call seen on the live stream. Only streamed runs produce these; the
+ * history endpoint returns user and assistant text only, so they are gone
+ * after a reload.
+ */
+type ToolStep = {
+  id: string;
+  role: "tool";
+  tool: string;
+  inputs: unknown;
+  // Absent until the tool_result frame for this call arrives.
+  output?: unknown;
+};
+
+type Entry = ChatMessage | ToolStep;
+
+/**
+ * Each session's on-screen conversation, kept in module memory so tool steps
+ * survive client-side navigation (a new chat moving to /sessions/<id>
+ * remounts this component) and are dropped only by a full page reload.
+ */
+const liveHistory = new Map<string, Entry[]>();
+
+function formatPayload(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value, null, 2);
+}
+
+function ToolStepRow({ step }: { step: ToolStep }) {
+  const isRunning = step.output === undefined;
+  return (
+    // pl matches the assistant bubble's text column: 32px avatar + 12px gap.
+    <details className="group pl-11">
+      <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-full text-sm text-zinc-500 transition-colors hover:text-zinc-950 [&::-webkit-details-marker]:hidden">
+        <span className={isRunning ? "animate-pulse" : undefined}>
+          {isRunning ? "Using" : "Used"} <code className="font-mono text-[13px]">{step.tool}</code>
+        </span>
+        <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m4 6 4 4 4-4" />
+        </svg>
+      </summary>
+      <div className="mt-2 flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-xs">
+        <section>
+          <h3 className="mb-1 font-medium text-zinc-500">Input</h3>
+          <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-zinc-800">{formatPayload(step.inputs)}</pre>
+        </section>
+        <section>
+          <h3 className="mb-1 font-medium text-zinc-500">Output</h3>
+          {isRunning ? (
+            <p className="text-zinc-400">Waiting for result…</p>
+          ) : (
+            <pre className="max-h-60 overflow-auto font-mono whitespace-pre-wrap break-words text-zinc-800">{formatPayload(step.output)}</pre>
+          )}
+        </section>
+      </div>
+    </details>
   );
 }
 
@@ -92,10 +187,19 @@ export default function Conversation({
   messages: ChatMessage[];
 }) {
   const router = useRouter();
-  const [history, setHistory] = useState(messages);
+  const [history, setHistory] = useState<Entry[]>(() => (sessionId && liveHistory.get(sessionId)) || messages);
+  // A new chat has no id until its session is created; history is cached under it from then on.
+  const [liveId, setLiveId] = useState(sessionId);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [streaming, setStreaming] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (liveId) {
+      liveHistory.set(liveId, history);
+    }
+  }, [liveId, history]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -118,10 +222,27 @@ export default function Conversation({
           return;
         }
         id = result.id;
+        setLiveId(id);
       }
 
-      const reply = await sendOverSocket(id, text);
-      setHistory((current) => [...current, { id: `assistant-${Date.now()}`, role: "assistant", content: reply }]);
+      if (streaming) {
+        await streamOverSocket(id, text, (frame) => {
+          if (frame.type === "content") {
+            setHistory((current) => [...current, { id: frame.id, role: "assistant", content: frame.text }]);
+          } else if (frame.type === "tool_call") {
+            setHistory((current) => [...current, { id: frame.id, role: "tool", tool: frame.tool, inputs: frame.inputs }]);
+          } else if (frame.type === "tool_result") {
+            setHistory((current) =>
+              current.map((entry) =>
+                entry.role === "tool" && entry.id === frame.tool_call_id ? { ...entry, output: frame.content } : entry,
+              ),
+            );
+          }
+        });
+      } else {
+        const reply = await sendOverSocket(id, text);
+        setHistory((current) => [...current, { id: `assistant-${Date.now()}`, role: "assistant", content: reply }]);
+      }
 
       if (sessionId === null) {
         router.push(`/sessions/${id}`);
@@ -138,7 +259,7 @@ export default function Conversation({
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-[12vh]">
         <h1 className="text-center font-display text-3xl text-zinc-950 sm:text-4xl">What are we working on?</h1>
         <div className="mt-8 w-full max-w-2xl">
-          <Composer onSend={handleSend} disabled={isPending} />
+          <Composer onSend={handleSend} disabled={isPending} streaming={streaming} onStreamingChange={setStreaming} />
           {error && <p className="mt-3 px-5 text-sm text-red-600">{error}</p>}
         </div>
       </main>
@@ -149,9 +270,13 @@ export default function Conversation({
     <main className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-4">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
-          {history.map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
+          {history.map((entry) =>
+            entry.role === "tool" ? (
+              <ToolStepRow key={entry.id} step={entry} />
+            ) : (
+              <MessageBubble key={entry.id} message={entry} />
+            ),
+          )}
           {isPending && (
             <div className="flex items-start gap-3">
               <Avatar role="assistant" />
@@ -164,7 +289,7 @@ export default function Conversation({
       </div>
       <div className="px-4 pb-6">
         <div className="mx-auto w-full max-w-2xl">
-          <Composer onSend={handleSend} disabled={isPending} />
+          <Composer onSend={handleSend} disabled={isPending} streaming={streaming} onStreamingChange={setStreaming} />
         </div>
       </div>
     </main>
