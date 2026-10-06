@@ -7,6 +7,7 @@ from langchain_core.messages import AnyMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from core.agent.prompt import SYSTEM_PROMPT
+from core.agent.tools import TOOLS
 from utils.config import Config
 
 
@@ -35,8 +36,6 @@ def parse_events_from_chunk(chunk: dict) -> Iterator[dict[str, Any]]:
 
         for msg in messages:
             if isinstance(msg, AIMessage):
-                # Models often pair a short preamble with tool calls, so text
-                # and tool calls on one message are both emitted.
                 text = str(msg.text)
                 if text.strip():
                     yield {"type": "content", "id": msg.id, "text": text}
@@ -165,6 +164,7 @@ class Agent:
         """
         kwargs = {
             "model": init_chat_model(self.model_id, **Config.model_init_kwargs.get(self.model_id, {})),
+            "tools": TOOLS,
             "system_prompt": SYSTEM_PROMPT,
             "checkpointer": saver,
         }
