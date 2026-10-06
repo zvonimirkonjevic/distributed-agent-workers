@@ -1,11 +1,62 @@
 """Deep agent wrapper that runs one session and tags its LangSmith traces."""
+from typing import Any, Iterator
+
 from deepagents import create_deep_agent
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import AnyMessage, AIMessage, ToolMessage
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from core.agent.prompt import SYSTEM_PROMPT
 from utils.config import Config
+
+
+def parse_events_from_chunk(chunk: dict) -> Iterator[dict[str, Any]]:
+    """
+    Parse events from a chunk of data.
+
+    Args:
+        chunk (dict): The chunk of data to parse.
+    
+    Yields:
+        dict: Parsed events from the chunk.
+    """
+    if chunk.get("type") != "updates":
+        return
+
+    data = chunk.get("data", {})
+    for node_output in data.values():
+        if not isinstance(node_output, dict):
+            continue
+
+        messages = node_output.get("messages", [])
+
+        if not isinstance(messages, list):
+            continue
+
+        for msg in messages:
+            if isinstance(msg, AIMessage):
+                # Models often pair a short preamble with tool calls, so text
+                # and tool calls on one message are both emitted.
+                text = str(msg.text)
+                if text.strip():
+                    yield {"type": "content", "id": msg.id, "text": text}
+
+                for tool_call in msg.tool_calls:
+                    yield {
+                        "type": "tool_call",
+                        "id": tool_call.get("id"),
+                        "tool": tool_call["name"],
+                        "inputs": tool_call["args"],
+                    }
+
+            elif isinstance(msg, ToolMessage) and msg.content:
+                yield {
+                    "type": "tool_result",
+                    "tool_call_id": msg.tool_call_id,
+                    "tool": msg.name,
+                    "content": msg.content,
+                }
+
 
 class Agent:
     """Runs a deepagents graph for one session with a given chat model.
@@ -58,7 +109,7 @@ class Agent:
             agent = self.create_agent(saver)
             response = await agent.ainvoke(
                 {"messages": [{"role": "user", "content": input_text}]},
-                config=self.config,
+                config={**self.config, "run_name": "Agent"},
             )
         return response
 
@@ -78,9 +129,30 @@ class Agent:
         return snapshot.values.get("messages", [])
 
 
-    def stream_invoke(self):
-        """Stream agent output. Not implemented yet."""
-        pass
+    async def astream(self, input_text: str):
+        """Run the agent on a single user message, yielding events per step.
+
+        Events come from LangGraph's "updates" stream, so each one reflects a
+        step that has already been checkpointed.
+
+        Args:
+            input_text: The user's message.
+
+        Yields:
+            Event dicts from `parse_events_from_chunk`, in run order.
+        """
+        async with AsyncPostgresSaver.from_conn_string(Config.postgres_psycopg_dsn) as saver:
+            agent = self.create_agent(saver)
+
+            async for chunk in agent.astream(
+                {"messages": [{"role": "user", "content": input_text}]},
+                config={**self.config, "run_name": "Agent"},
+                stream_mode="updates",
+                version="v2",
+            ):
+                for event in parse_events_from_chunk(chunk):
+                    yield event
+
 
     def create_agent(self, saver: AsyncPostgresSaver):
         """Build the deep agent graph for this session's model.
